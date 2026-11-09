@@ -1,7 +1,7 @@
 # 🐧 OverTheWire: Bandit — Beginner Lab Notes (Levels 0–11)
 
 **Date:** November 9, 2026  
-**Author:** Krle (`krstic-sec`)  
+**Author:** Luka Krstić (`krstic-sec`)  
 **Environment:** Ubuntu Linux (ThinkPad T560)  
 
 ---
