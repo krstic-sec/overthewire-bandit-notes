@@ -1,4 +1,4 @@
-# 🐧 OverTheWire: Bandit — Beginner Lab Notes (Levels 0–11)
+# 🐧 OverTheWire: Bandit — Beginner Lab Notes (Levels 0–15)
 
 **Date:** November 9, 2026  
 **Author:** Luka Krstić (`krstic-sec`)  
@@ -129,8 +129,29 @@ While working through the levels, I kept a physical notebook beside my keyboard 
   ```bash
   base64 -d data.txt
   ```
+  ---
 
+### Level 11 ➔ Level 12: ROT13 Cipher & Character Translation
+- **Goal:** Decode the password stored in `data.txt`, where all lowercase and uppercase letters have been rotated by 13 positions (ROT13).
+- **My Note:** Simply running `cat data.txt` prints a password-like string, but it's actually encrypted and won't work for the next level. You need to pipe (`|`) the output into the `tr` (translate) command with two character sets (`A-Za-z` mapped to `N-ZA-Mn-za-m`) to shift the letters back and reveal the real password.
+- **Command:**
+  ```bash
+  cat data.txt | tr 'A-Za-z' 'N-ZA-Mn-za-m'
+  ```
 ---
+### Level 12 ➔ Level 13: Working in `/tmp` & Multi-Layer Decompression
+- **Goal:** Reverse a hexdump and decompress a file that has been repeatedly compressed multiple times.
+- **My Note:** You don't have write permissions in the home directory, so you have to work inside `/tmp`. Following the hint, I used `mktemp -d` to create a temporary folder with write access, copied `data.txt` into it, and verified it with `ls`. From there, the workflow is converting the hexdump back to binary (`xxd -r`) and iteratively checking the file type (`file`) to decompress it layer by layer (`gzip`, `bzip2`, `tar`).
+- **Commands:**
+  ```bash
+  cd $(mktemp -d)
+  cp ~/data.txt .
+  ls
+  xxd -r data.txt fajl
+  file fajl
+  # Rename with proper extension (.gz, .bz2, .tar) and decompress iteratively
+  ```
+  ---
 
 ## 💡 What I Learned Today
 
@@ -138,3 +159,6 @@ While working through the levels, I kept a physical notebook beside my keyboard 
 2. Piping (`|`) commands together (like `sort | uniq` or `strings | grep`) is where the real power of the CLI comes from.
 3. Always redirect errors (`2>/dev/null`) when searching system-wide directories.
 4. Writing down notes in a physical notebook while troubleshooting makes remembering the syntax much easier.
+5. **Character Translation & ROT13 (`tr`):** Learned how classical substitution ciphers like ROT13 shift characters and how to reverse them using `tr 'A-Za-z' 'N-ZA-Mn-za-m'`.
+6. **Working Safely in `/tmp`:** When you don't have write permissions in a directory, `/tmp` (combined with `mktemp -d`) is the standard isolated workspace for manipulating and unpacking files.
+7. **Hex Dumps & Layered Decompression (`xxd`, `file`):** Learned how to convert raw hexadecimal dumps back into binary files using `xxd -r` and iteratively inspect file headers (`file`) to unpack multi-layered archives (`gzip`, `bzip2`, `tar`).
