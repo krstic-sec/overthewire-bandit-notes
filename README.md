@@ -4,6 +4,7 @@
 **Last Updated:** November 25, 2026  
 **Author:** Luka Krstić (`krstic-sec`)  
 **Environment:** Ubuntu Linux (ThinkPad T560)
+
 ---
 
 ## 📝 About These Notes
