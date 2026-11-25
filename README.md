@@ -1,9 +1,9 @@
-# 🐧 OverTheWire: Bandit — Beginner Lab Notes (Levels 0–20)
+# 🐧 OverTheWire: Bandit — Beginner Lab Notes (Levels 0–21)
 
 **Date:** November 9, 2026  
+**Last Updated:** November 25, 2026  
 **Author:** Luka Krstić (`krstic-sec`)  
-**Environment:** Ubuntu Linux (ThinkPad T560)  
-
+**Environment:** Ubuntu Linux (ThinkPad T560)
 ---
 
 ## 📝 About These Notes
@@ -121,7 +121,6 @@ While working through the levels, I kept a physical notebook beside my keyboard 
   ```
 
 ---
-
 ### Level 10 ➔ Level 11: Base64 Decoding
 - **Goal:** Decode data stored in Base64 format.
 - **My Note:** Simple and straightforward. Base64 is an encoding format, and the `-d` flag decodes the data back into plain text.
@@ -129,7 +128,8 @@ While working through the levels, I kept a physical notebook beside my keyboard 
   ```bash
   base64 -d data.txt
   ```
-  ---
+
+---
 
 ### Level 11 ➔ Level 12: ROT13 Cipher & Character Translation
 - **Goal:** Decode the password stored in `data.txt`, where all lowercase and uppercase letters have been rotated by 13 positions (ROT13).
@@ -138,7 +138,9 @@ While working through the levels, I kept a physical notebook beside my keyboard 
   ```bash
   cat data.txt | tr 'A-Za-z' 'N-ZA-Mn-za-m'
   ```
+
 ---
+
 ### Level 12 ➔ Level 13: Working in `/tmp` & Multi-Layer Decompression
 - **Goal:** Reverse a hexdump and decompress a file that has been repeatedly compressed multiple times.
 - **My Note:** You don't have write permissions in the home directory, so you have to work inside `/tmp`. Following the hint, I used `mktemp -d` to create a temporary folder with write access, copied `data.txt` into it, and verified it with `ls`. From there, the workflow is converting the hexdump back to binary (`xxd -r`) and iteratively checking the file type (`file`) to decompress it layer by layer (`gzip`, `bzip2`, `tar`).
@@ -151,8 +153,10 @@ While working through the levels, I kept a physical notebook beside my keyboard 
   file fajl
   # Rename with proper extension (.gz, .bz2, .tar) and decompress iteratively
   ```
-  ---
-  ### Level 13 ➔ Level 14: SSH Private Keys & File Permissions
+
+---
+
+### Level 13 ➔ Level 14: SSH Private Keys & File Permissions
 - **Goal:** Authenticate into `bandit14` using a private SSH key instead of a password.
 - **My Note:** Localhost SSH connections from the server are blocked, so I transferred `sshkey.private` to my machine using `scp` (uppercase `-P` for port). SSH ignores private keys if permissions are too open, so I locked the file with `chmod 600` before connecting with `-i`.
 - **Commands:**
@@ -161,16 +165,6 @@ While working through the levels, I kept a physical notebook beside my keyboard 
   chmod 600 ~/bandit14.key
   ssh -i ~/bandit14.key bandit14@bandit.labs.overthewire.org -p 2220
   cat /etc/bandit_pass/bandit14
-  ```
-
----
-
-### Level 14 ➔ Level 15: Submitting Data to a Local Network Port
-- **Goal:** Send the `bandit14` password to port `30000` on `localhost`.
-- **My Note:** Used `nc` (netcat) and a pipe (`|`) to transmit the password string directly over a local TCP socket.
-- **Command:**
-  ```bash
-  cat /etc/bandit_pass/bandit14 | nc localhost 30000
   ```
 
 ---
