@@ -1,4 +1,4 @@
-# 🐧 OverTheWire: Bandit — Beginner Lab Notes (Levels 0–15)
+# 🐧 OverTheWire: Bandit — Beginner Lab Notes (Levels 0–20)
 
 **Date:** November 9, 2026  
 **Author:** Luka Krstić (`krstic-sec`)  
@@ -152,8 +152,92 @@ While working through the levels, I kept a physical notebook beside my keyboard 
   # Rename with proper extension (.gz, .bz2, .tar) and decompress iteratively
   ```
   ---
+  ### Level 13 ➔ Level 14: SSH Private Keys & File Permissions
+- **Goal:** Authenticate into `bandit14` using a private SSH key instead of a password.
+- **My Note:** Localhost SSH connections from the server are blocked, so I transferred `sshkey.private` to my machine using `scp` (uppercase `-P` for port). SSH ignores private keys if permissions are too open, so I locked the file with `chmod 600` before connecting with `-i`.
+- **Commands:**
+  ```bash
+  scp -P 2220 bandit13@bandit.labs.overthewire.org:sshkey.private ~/bandit14.key
+  chmod 600 ~/bandit14.key
+  ssh -i ~/bandit14.key bandit14@bandit.labs.overthewire.org -p 2220
+  cat /etc/bandit_pass/bandit14
+  ```
 
-## 💡 What I Learned Today
+---
+
+### Level 14 ➔ Level 15: Submitting Data to a Local Network Port
+- **Goal:** Send the `bandit14` password to port `30000` on `localhost`.
+- **My Note:** Used `nc` (netcat) and a pipe (`|`) to transmit the password string directly over a local TCP socket.
+- **Command:**
+  ```bash
+  cat /etc/bandit_pass/bandit14 | nc localhost 30000
+  ```
+
+---
+
+### Level 15 ➔ Level 16: SSL/TLS Encrypted Sockets
+- **Goal:** Submit the `bandit15` password to `localhost` on port `30001` using SSL/TLS encryption.
+- **My Note:** Standard `nc` fails because the service expects an encrypted handshake. Used `openssl s_client` with `-ign_eof` so the connection stays open long enough to return the next password.
+- **Command:**
+  ```bash
+  cat /etc/bandit_pass/bandit15 | openssl s_client -connect localhost:30001 -ign_eof
+  ```
+
+---
+
+### Level 16 ➔ Level 17: Port Scanning & Extracting SSH Keys
+- **Goal:** Find the single SSL-enabled port between `31000` and `32000`, submit the current password, and retrieve the next private key.
+- **My Note:** Used `nmap -sV` to identify which open port spoke SSL (`ssl/unknown`), piped the password via `openssl`, filtered the exact key block using `sed` (to avoid `invalid format` errors from manual copy-pasting), and transferred it via `scp`.
+- **Commands:**
+  ```bash
+  nmap -sV -p 31000-32000 localhost
+  cat /etc/bandit_pass/bandit16 | openssl s_client -connect localhost:<PORT> -ign_eof 2>/dev/null | sed -n '/-----BEGIN/,/-----END/p' > /tmp/k17
+  ```
+
+---
+
+### Level 17 ➔ Level 18: Comparing Files with `diff`
+- **Goal:** Find the single modified line between `passwords.old` and `passwords.new`.
+- **My Note:** The `diff` utility compares files line by line, marking the old line with `<` and the updated password with `>`.
+- **Command:**
+  ```bash
+  diff passwords.old passwords.new
+  ```
+
+---
+
+### Level 18 ➔ Level 19: Bypassing `.bashrc` Auto-Logout
+- **Goal:** Read `readme` when `.bashrc` immediately terminates interactive SSH logins (`Byebye !`).
+- **My Note:** Passing the read command directly inside the `ssh` call executes it before the interactive shell loads `.bashrc`.
+- **Command:**
+  ```bash
+  ssh bandit18@bandit.labs.overthewire.org -p 2220 "cat readme"
+  ```
+
+---
+
+### Level 19 ➔ Level 20: Exploiting SetUID Binaries
+- **Goal:** Use the `bandit20-do` binary to read the password owned by `bandit20`.
+- **My Note:** The binary has the SetUID bit set (`-rwsr-x---`), meaning any command passed as an argument executes with `bandit20` privileges.
+- **Command:**
+  ```bash
+  ./bandit20-do cat /etc/bandit_pass/bandit20
+  ```
+
+---
+
+### Level 20 ➔ Level 21: SetUID Binaries & Background Netcat Listeners
+- **Goal:** Make the SetUID `suconnect` binary connect to a local port serving the `bandit20` password.
+- **My Note:** Started a background `nc` listener (`&`) on a free local port that outputs the current password upon connection, then pointed `./suconnect` to that port.
+- **Commands:**
+  ```bash
+  cat /etc/bandit_pass/bandit20 | nc -l -p 4444 &
+  ./suconnect 4444
+  ```
+
+---
+
+## 💡 What I Learned So Far
 
 1. In Linux, special characters like `-`, spaces, and `.` always have special meanings to the shell and require escaping.
 2. Piping (`|`) commands together (like `sort | uniq` or `strings | grep`) is where the real power of the CLI comes from.
@@ -162,3 +246,8 @@ While working through the levels, I kept a physical notebook beside my keyboard 
 5. **Character Translation & ROT13 (`tr`):** Learned how classical substitution ciphers like ROT13 shift characters and how to reverse them using `tr 'A-Za-z' 'N-ZA-Mn-za-m'`.
 6. **Working Safely in `/tmp`:** When you don't have write permissions in a directory, `/tmp` (combined with `mktemp -d`) is the standard isolated workspace for manipulating and unpacking files.
 7. **Hex Dumps & Layered Decompression (`xxd`, `file`):** Learned how to convert raw hexadecimal dumps back into binary files using `xxd -r` and iteratively inspect file headers (`file`) to unpack multi-layered archives (`gzip`, `bzip2`, `tar`).
+8. **SSH Key Hygiene & Transfers (`scp`, `chmod 600`):** Learned how to transfer private keys with `scp -P` and why SSH strictly requires `600` permissions (`rw-------`) before accepting an identity file.
+9. **Network Sockets & Encryption (`nc`, `openssl`):** Practiced interacting with local TCP ports via `nc` and handling SSL/TLS-encrypted services using `openssl s_client -ign_eof`.
+10. **Service Reconnaissance & Clean Extraction (`nmap`, `sed`):** Used `nmap -sV` to pinpoint SSL services across port ranges and `sed` to cleanly extract PEM/OpenSSH key blocks without copy-paste formatting errors.
+11. **File Diffing & Non-Interactive SSH (`diff`, `ssh "..."`):** Used `diff` to isolate single-line file changes and passed remote commands directly through `ssh` to bypass `.bashrc` auto-logout traps.
+12. **Privilege Execution & Background Jobs (`SetUID`, `&`):** Understood how SetUID binaries (`-rwsr-x---`) execute with owner privileges and how to pair background `nc -l` listeners (`&`) with local client binaries.
